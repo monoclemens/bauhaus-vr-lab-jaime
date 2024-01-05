@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 
 enum GrabState
 {
-    Idle, Hit, Grab
+    Idle, Hover, Grab
 }
 
 public class Homer : MonoBehaviour
@@ -34,20 +34,6 @@ public class Homer : MonoBehaviour
     // Added by Clay to keep track of the grab state.
     private GrabState grabState = GrabState.Idle;
 
-    // utility bool to check if you can grab an object
-    private bool CanGrab
-    {
-        get
-        {
-            if (handCollider.isColliding)
-            {
-                return handCollider.collidingObject.GetComponent<ManipulationSelector>().RequestGrab();
-            }
-
-            return false;
-        }
-    }
-
     /**
      * Variables needed for hand offset calculation.
      * 
@@ -57,19 +43,6 @@ public class Homer : MonoBehaviour
     private RaycastHit hit;
     private float grabOffsetDistance;
     private float grabHandDistance;
-
-    // convenience variables for hand offset calculations
-    private Vector3 Origin
-    {
-        get
-        {
-            Vector3 v = head.position;
-            v.y -= originHeadOffset;
-            return v;
-        }
-    }
-
-    private Vector3 Direction => hand.position - Origin;
 
     #endregion
 
@@ -95,10 +68,10 @@ public class Homer : MonoBehaviour
 
     private void Update()
     {
-        if (grabbedObject == null)
-            UpdateRay();
-        else
+        if (grabbedObject != null)
+        {
             ApplyHandOffset();
+        }
 
         UpdateRay();
         GrabCalculation();
@@ -108,8 +81,12 @@ public class Homer : MonoBehaviour
 
     #region Custom Methods
 
-    private void DrawRay()
+    // This method just renders the ray. It's good to go.
+    private void UpdateRay()
     {
+        // TODO: your solution for excercise 3.5
+        // use this function to calculate and adjust the ray of the h.o.m.e.r. technique
+
         var positions = new Vector3[2];
 
         positions[0] = Origin;
@@ -118,17 +95,9 @@ public class Homer : MonoBehaviour
         ray.SetPositions(positions);
     }
 
-    private void UpdateRay()
-    {
-        // TODO: your solution for excercise 3.5
-        // use this function to calculate and adjust the ray of the h.o.m.e.r. technique
-
-        DrawRay();
-    }
-
     private void ApplyHandOffset()
     {
-        //TODO: your solution for excercise 3.5
+        // TODO: your solution for excercise 3.5
         // use this function to calculate and adjust the hand as described in the h.o.m.e.r. technique
 
         // Compute the current distance between origin and tracked hand.
@@ -165,13 +134,14 @@ public class Homer : MonoBehaviour
             if (grabAction.action.WasPressedThisFrame())
             {
                 // Move the virtual hand to the object.
+                // TODO bug
                 transform.position = hit.point;
 
                 return GrabState.Grab;
             }
 
             // Otherwise there is only a hit.
-            return GrabState.Hit;
+            return GrabState.Hover;
         }
 
         return GrabState.Idle;
@@ -185,7 +155,7 @@ public class Homer : MonoBehaviour
                 ray.startColor = Color.white;
                 ray.endColor = Color.white;
                 break;
-            case GrabState.Hit:
+            case GrabState.Hover:
                 ray.startColor = Color.green;
                 ray.endColor = Color.green;
                 break;
@@ -250,6 +220,34 @@ public class Homer : MonoBehaviour
         else
         {
             return Matrix4x4.TRS(t.localPosition, t.localRotation, t.localScale);
+        }
+    }
+
+    // convenience variables for hand offset calculations
+    private Vector3 Origin
+    {
+        get
+        {
+            Vector3 originWithOffset = head.position;
+            originWithOffset.y -= originHeadOffset;
+
+            return originWithOffset;
+        }
+    }
+
+    private Vector3 Direction => hand.position - Origin;
+
+    // utility bool to check if you can grab an object
+    private bool CanGrab
+    {
+        get
+        {
+            if (handCollider.isColliding)
+            {
+                return handCollider.collidingObject.GetComponent<ManipulationSelector>().RequestGrab();
+            }
+
+            return false;
         }
     }
 
